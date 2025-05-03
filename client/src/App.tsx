@@ -18,6 +18,11 @@ import Footer from "@/components/layout/footer";
 import { User } from "@shared/schema";
 import { apiRequest } from "./lib/queryClient";
 
+// Reusable component for admin route checks
+const AdminRoute = ({ user, component: Component }: { user: User | null; component: React.ComponentType<any> }) => {
+  return user && user.isAdmin ? <Component user={user} /> : <NotFound />;
+};
+
 function App() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -29,7 +34,7 @@ function App() {
         const userData = await res.json();
         setUser(userData);
       } catch (error) {
-        // User is not logged in or session expired
+        console.error("Failed to fetch user data:", error); // Improved error handling
         setUser(null);
       } finally {
         setLoading(false);
@@ -51,18 +56,22 @@ function App() {
                 <Route path="/" component={() => <Home user={user} />} />
                 <Route path="/games" component={() => <Games user={user} />} />
                 <Route path="/leaderboard" component={Leaderboard} />
-                <Route path="/profile" component={() => (
-                  user ? <Profile user={user} setUser={setUser} /> : <NotFound />
-                )} />
-                <Route path="/admin" component={() => (
-                  user && user.isAdmin ? <AdminDashboard user={user} /> : <NotFound />
-                )} />
-                <Route path="/admin/users" component={() => (
-                  user && user.isAdmin ? <AdminUsers user={user} /> : <NotFound />
-                )} />
-                <Route path="/admin/transactions" component={() => (
-                  user && user.isAdmin ? <AdminTransactions user={user} /> : <NotFound />
-                )} />
+                <Route
+                  path="/profile"
+                  component={() => (user ? <Profile user={user} setUser={setUser} /> : <NotFound />)}
+                />
+                <Route
+                  path="/admin"
+                  component={() => <AdminRoute user={user} component={AdminDashboard} />}
+                />
+                <Route
+                  path="/admin/users"
+                  component={() => <AdminRoute user={user} component={AdminUsers} />}
+                />
+                <Route
+                  path="/admin/transactions"
+                  component={() => <AdminRoute user={user} component={AdminTransactions} />}
+                />
                 <Route component={NotFound} />
               </Switch>
             )}
